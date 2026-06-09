@@ -192,9 +192,14 @@ def segment_customers(
             f"segment_customers: missing columns {missing!r} in rfm_df."
         )
     if len(rfm_df) < n_clusters:
-        raise ValueError(
-            f"segment_customers: {len(rfm_df)} customers < n_clusters={n_clusters}."
+        logger.warning(
+            f"segment_customers: {len(rfm_df)} customers < n_clusters={n_clusters}. Returning default segment."
         )
+        df = rfm_df.copy()
+        df["cluster"] = 0
+        df["segment"] = "Champions"
+        df["cluster_rfm_mean"] = df["RFM_score"].round(2)
+        return df
 
     features = rfm_df[["R_score", "F_score", "M_score"]].values.astype(float)
     scaler = StandardScaler()

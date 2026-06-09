@@ -208,6 +208,9 @@ def get_outstanding_payments(
         outstanding["risk_level"] = pd.Series(dtype=str)
         outstanding["urgency_score"] = pd.Series(dtype=float)
         outstanding["whatsapp_message"] = pd.Series(dtype=str)
+        outstanding["outstanding_amount"] = pd.Series(dtype=float)
+        outstanding["credit_limit"] = pd.Series(dtype=float)
+        outstanding["area"] = pd.Series(dtype=str)
         return outstanding
 
     # Days overdue — cap at 999 to avoid synthetic data inflating to 800+ days
