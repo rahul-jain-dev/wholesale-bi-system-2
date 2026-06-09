@@ -15,10 +15,7 @@ venv/
 env/
 ENV/
 
-# Data files (keep .gitkeep, exclude actual data CSVs)
-data/*.csv
-data/*.xlsx
-data/*.xls
+# Data files (keep .gitkeep)
 !data/.gitkeep
 
 # MLflow artifacts
