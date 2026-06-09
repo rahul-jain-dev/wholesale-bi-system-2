@@ -258,7 +258,7 @@ def get_outstanding_payments(
     # ── Multi-bill WhatsApp message (grouped by customer) ────────────────────
     # Build a customer-level summary with all invoices listed
     def _build_multibill_message(group: pd.DataFrame) -> str:
-        name = group["customer_name"].iloc[0]
+        name = group.name
         area = group.get("area", group.get("customer_area", pd.Series([""]*len(group)))).iloc[0]
         area_str = f" ({area})" if area and str(area).strip() else ""
         total_amt = group["invoice_amount"].sum()
