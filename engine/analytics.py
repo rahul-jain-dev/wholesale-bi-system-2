@@ -202,6 +202,12 @@ def get_outstanding_payments(
 
     if outstanding.empty:
         logger.info("get_outstanding_payments: no outstanding transactions found.")
+        outstanding["days_overdue"] = pd.Series(dtype=int)
+        outstanding["npa_status"] = pd.Series(dtype=str)
+        outstanding["invoice_amount"] = pd.Series(dtype=float)
+        outstanding["risk_level"] = pd.Series(dtype=str)
+        outstanding["urgency_score"] = pd.Series(dtype=float)
+        outstanding["whatsapp_message"] = pd.Series(dtype=str)
         return outstanding
 
     # Days overdue — cap at 999 to avoid synthetic data inflating to 800+ days
