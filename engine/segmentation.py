@@ -254,21 +254,23 @@ def segment_customers(
         df.groupby("cluster")["RFM_score"].mean().round(2)
     )
 
-    # MLflow logging
-    mlflow.set_experiment(MLFLOW_EXPERIMENT)
-    with mlflow.start_run(run_name="customer_segmentation"):
-        mlflow.log_param("n_clusters", n_clusters)
-        mlflow.log_param("random_state", random_state)
-        mlflow.log_param("n_customers", len(df))
-        mlflow.log_metric("silhouette_score", round(final_sil, 4))
-        mlflow.log_metric("inertia", round(final_inertia, 2))
-        mlflow.log_artifact(elbow_path)
-        mlflow.log_artifact(sil_path)
-
-        try:
-            mlflow.sklearn.log_model(final_model, artifact_path="kmeans_model")
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("segment_customers: could not log KMeans model: %s", exc)
+    # MLflow logging (non-fatal)
+    try:
+        mlflow.set_experiment(MLFLOW_EXPERIMENT)
+        with mlflow.start_run(run_name="customer_segmentation"):
+            mlflow.log_param("n_clusters", n_clusters)
+            mlflow.log_param("random_state", random_state)
+            mlflow.log_param("n_customers", len(df))
+            mlflow.log_metric("silhouette_score", round(final_sil, 4))
+            mlflow.log_metric("inertia", round(final_inertia, 2))
+            mlflow.log_artifact(elbow_path)
+            mlflow.log_artifact(sil_path)
+            try:
+                mlflow.sklearn.log_model(final_model, artifact_path="kmeans_model")
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("segment_customers: could not log KMeans model: %s", exc)
+    except Exception as exc:
+        logger.warning("MLflow logging failed (non-fatal): %s", exc)
 
     logger.info(
         "segment_customers: silhouette=%.4f, inertia=%.2f. Segments: %s",

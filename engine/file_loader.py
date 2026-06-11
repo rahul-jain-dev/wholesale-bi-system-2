@@ -110,6 +110,10 @@ def read_file(
         source.seek(0)
         raw_bytes = source.read()
         ext = _sniff_extension(raw_bytes)
+    elif isinstance(source, io.StringIO):
+        source.seek(0)
+        raw_bytes = source.getvalue().encode('utf-8')
+        ext = _sniff_extension(raw_bytes)
     else:
         raise TypeError(f"Unsupported source type: {type(source)}")
 

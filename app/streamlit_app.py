@@ -333,8 +333,9 @@ def _get_anomalies(s_hash: int, _sales: pd.DataFrame) -> pd.DataFrame:
 @st.cache_data(show_spinner="Running forecasting...")
 def _get_forecast_spikes(s_hash: int, inv_hash: int, _sales: pd.DataFrame, _inv: pd.DataFrame) -> pd.DataFrame:
     try:
-        fc = forecast_demand(_sales, "FMCG", 30)
-        return detect_demand_spikes({"FMCG": fc}, _inv)
+        top_cat = _sales["category"].mode().iloc[0] if "category" in _sales.columns and not _sales.empty else "FMCG"
+        fc = forecast_demand(_sales, top_cat, 30)
+        return detect_demand_spikes({top_cat: fc}, _inv)
     except Exception:
         return pd.DataFrame()
 
@@ -451,6 +452,9 @@ if page == "🏠 Upload & Overview":
                         cust_file, standardize_customers, CUSTOMER_ALIASES, "Customer"
                     )
                 st.session_state["data_source"] = "uploaded"
+                st.session_state["sales_hash"] = int(pd.util.hash_pandas_object(st.session_state["sales_df"]).sum())
+                st.session_state["inv_hash"] = int(pd.util.hash_pandas_object(st.session_state["inv_df"]).sum())
+                st.session_state["cust_hash"] = int(pd.util.hash_pandas_object(st.session_state["cust_df"]).sum())
                 st.success(
                     "✅ Uploaded data cleaned and standardized to canonical schema. "
 
@@ -469,6 +473,9 @@ if page == "🏠 Upload & Overview":
                 st.session_state["inv_df"]      = inv_df
                 st.session_state["cust_df"]     = cust_df
                 st.session_state["data_source"] = "synthetic"
+                st.session_state["sales_hash"] = int(pd.util.hash_pandas_object(sales_df).sum())
+                st.session_state["inv_hash"] = int(pd.util.hash_pandas_object(inv_df).sum())
+                st.session_state["cust_hash"] = int(pd.util.hash_pandas_object(cust_df).sum())
             st.info("📊 Showing synthetic demonstration data calibrated against real Indian WPI + festival calendars. Upload your ERP CSVs above to analyze real data.")
         else:
             st.warning("⚠️ No data found. Run `python data/data_generator.py` to generate demo data, or upload your CSV files above.")
@@ -479,8 +486,8 @@ if page == "🏠 Upload & Overview":
     cust_df  = st.session_state["cust_df"]
 
     # ── KPI Cards ────────────────────────────────────────────────────────────
-    dead_stock_df  = _get_dead_stock(int(pd.util.hash_pandas_object(inv_df).sum()), inv_df)
-    outstanding_df = _get_outstanding(int(pd.util.hash_pandas_object(sales_df).sum()), int(pd.util.hash_pandas_object(cust_df).sum()), sales_df, cust_df)
+    dead_stock_df  = _get_dead_stock(st.session_state["inv_hash"], inv_df)
+    outstanding_df = _get_outstanding(st.session_state["sales_hash"], st.session_state["cust_hash"], sales_df, cust_df)
 
     total_products   = len(inv_df)
     dead_stock_val   = dead_stock_df.loc[dead_stock_df["stock_status"] == "DEAD", "capital_blocked"].sum()
@@ -504,8 +511,12 @@ if page == "🏠 Upload & Overview":
     with col1:
         st.markdown("#### 📅 Date Range")
         dates = pd.to_datetime(sales_df["date"])
-        st.write(f"**{dates.min().strftime('%d %b %Y')}** → **{dates.max().strftime('%d %b %Y')}**")
-        days = (dates.max() - dates.min()).days
+        if sales_df.empty or pd.isna(dates.min()):
+            st.write("**No date range available** — upload sales data with a date column.")
+            days = 0
+        else:
+            st.write(f"**{dates.min().strftime('%d %b %Y')}** → **{dates.max().strftime('%d %b %Y')}**")
+            days = (dates.max() - dates.min()).days
         st.caption(f"{days} days of transaction history")
 
         total_rev = (sales_df["sale_price"] * sales_df["quantity"]).sum()
@@ -553,7 +564,7 @@ elif page == "📦 Inventory Intelligence":
     """, unsafe_allow_html=True)
 
     inv_df = st.session_state["inv_df"]
-    dead_stock_df = _get_dead_stock(int(pd.util.hash_pandas_object(inv_df).sum()), inv_df)
+    dead_stock_df = _get_dead_stock(st.session_state["inv_hash"], inv_df)
 
     # Summary metrics
     active = (dead_stock_df["stock_status"] == "ACTIVE").sum()
@@ -673,7 +684,7 @@ elif page == "💰 Payment Collection":
     sales_df = st.session_state["sales_df"]
     cust_df  = st.session_state["cust_df"]
     outstanding_df = _get_outstanding(
-        int(pd.util.hash_pandas_object(sales_df).sum()), int(pd.util.hash_pandas_object(cust_df).sum()), sales_df, cust_df
+        st.session_state["sales_hash"], st.session_state["cust_hash"], sales_df, cust_df
     )
 
     # NPA Filter
@@ -694,6 +705,8 @@ elif page == "💰 Payment Collection":
     with col3: st.metric("🟡 MEDIUM Risk", f"{len(medium_risk)} customers", delta=fmt_inr(med_val), delta_color="inverse")
     with col4:
         avg_overdue = outstanding_df["days_overdue"].mean()
+        if outstanding_df.empty or pd.isna(avg_overdue):
+            avg_overdue = 0
         st.metric("📅 Avg Days Overdue", f"{avg_overdue:.0f} days")
 
     st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
@@ -798,7 +811,7 @@ elif page == "👤 Customer Intelligence":
     """, unsafe_allow_html=True)
 
     sales_df = st.session_state["sales_df"]
-    churn_df = _get_churned_retailers(int(pd.util.hash_pandas_object(sales_df).sum()), sales_df)
+    churn_df = _get_churned_retailers(st.session_state["sales_hash"], sales_df)
 
     if churn_df.empty:
         st.success("✅ No churned or at-risk customers detected. All active customers are ordering regularly.")
@@ -860,10 +873,10 @@ elif page == "📈 Sales & Profitability":
 
     sales_df = st.session_state["sales_df"]
 
-    monthly_df = _get_monthly_trend(int(pd.util.hash_pandas_object(sales_df).sum()), sales_df)
-    margins    = _get_margins(int(pd.util.hash_pandas_object(sales_df).sum()), sales_df)
-    area_df    = _get_area_rank(int(pd.util.hash_pandas_object(sales_df).sum()), sales_df)
-    heatmap_df = _get_heatmap(int(pd.util.hash_pandas_object(sales_df).sum()), sales_df)
+    monthly_df = _get_monthly_trend(st.session_state["sales_hash"], sales_df)
+    margins    = _get_margins(st.session_state["sales_hash"], sales_df)
+    area_df    = _get_area_rank(st.session_state["sales_hash"], sales_df)
+    heatmap_df = _get_heatmap(st.session_state["sales_hash"], sales_df)
 
     # ── Monthly Revenue Trend ─────────────────────────────────────────────────
     st.markdown("#### 📅 Monthly Revenue Trend")
@@ -984,11 +997,11 @@ elif page == "🎯 Recommendations":
     cust_df  = st.session_state["cust_df"]
 
     with st.spinner("Running all ML models and analytics..."):
-        dead_stock_df  = _get_dead_stock(int(pd.util.hash_pandas_object(inv_df).sum()), inv_df)
-        outstanding_df = _get_outstanding(int(pd.util.hash_pandas_object(sales_df).sum()), int(pd.util.hash_pandas_object(cust_df).sum()), sales_df, cust_df)
-        segment_df     = _get_segments(int(pd.util.hash_pandas_object(sales_df).sum()), int(pd.util.hash_pandas_object(cust_df).sum()), sales_df, cust_df)
-        anomaly_df     = _get_anomalies(int(pd.util.hash_pandas_object(sales_df).sum()), sales_df)
-        spike_df       = _get_forecast_spikes(int(pd.util.hash_pandas_object(sales_df).sum()), int(pd.util.hash_pandas_object(inv_df).sum()), sales_df, inv_df)
+        dead_stock_df  = _get_dead_stock(st.session_state["inv_hash"], inv_df)
+        outstanding_df = _get_outstanding(st.session_state["sales_hash"], st.session_state["cust_hash"], sales_df, cust_df)
+        segment_df     = _get_segments(st.session_state["sales_hash"], st.session_state["cust_hash"], sales_df, cust_df)
+        anomaly_df     = _get_anomalies(st.session_state["sales_hash"], sales_df)
+        spike_df       = _get_forecast_spikes(st.session_state["sales_hash"], st.session_state["inv_hash"], sales_df, inv_df)
 
         all_recs = generate_recommendations(
             dead_stock_df=dead_stock_df,
@@ -1072,7 +1085,7 @@ elif page == "🎯 Recommendations":
     col1, col2 = st.columns([1, 2])
     with col1:
         discount_pct = st.slider("Clearance Discount %", 5, 40, 15, key="whatif_discount")
-        dead_stock_df_local = _get_dead_stock(int(pd.util.hash_pandas_object(inv_df).sum()), inv_df)
+        dead_stock_df_local = _get_dead_stock(st.session_state["inv_hash"], inv_df)
         dead_only = dead_stock_df_local[dead_stock_df_local["stock_status"] == "DEAD"].copy()
 
         if not dead_only.empty:

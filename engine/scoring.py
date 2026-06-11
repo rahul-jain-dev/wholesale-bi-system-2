@@ -113,6 +113,13 @@ def normalize_factor(
             "normalize_factor requires numeric arguments; "
             f"got value={type(value)}, min_val={type(min_val)}, max_val={type(max_val)}."
         )
+    # Guard against NaN / inf propagation
+    if any(math.isnan(v) or math.isinf(v) for v in (value, min_val, max_val)):
+        logger.debug(
+            "normalize_factor: NaN or inf detected (value=%s, min=%s, max=%s). Returning 0.0.",
+            value, min_val, max_val,
+        )
+        return 0.0
     if max_val == min_val:
         logger.debug("normalize_factor: min_val == max_val (%s). Returning 0.0.", min_val)
         return 0.0

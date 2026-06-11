@@ -377,13 +377,17 @@ def detect_churned_retailers(
         logger.warning("detect_churned_retailers: insufficient baseline data.")
         return pd.DataFrame()
 
+    # Build aggregation dict dynamically based on available columns
+    _baseline_agg: dict[str, tuple] = {
+        "baseline_orders": ("invoice_no", "nunique") if "invoice_no" in baseline.columns else ("date", "count"),
+        "baseline_revenue": ("revenue", "sum"),
+    }
+    if "customer_area" in baseline.columns:
+        _baseline_agg["customer_area"] = ("customer_area", "first")
+
     baseline_stats = (
         baseline.groupby("customer_name", as_index=False)
-        .agg(
-            baseline_orders=("invoice_no", "nunique"),
-            baseline_revenue=("revenue", "sum"),
-            customer_area=("customer_area", "first"),
-        )
+        .agg(**_baseline_agg)
     )
     baseline_stats["avg_monthly_orders"]  = (baseline_stats["baseline_orders"] / 6).round(1)
     baseline_stats["avg_monthly_revenue"] = (baseline_stats["baseline_revenue"] / 6).round(0)
@@ -395,9 +399,10 @@ def detect_churned_retailers(
     if active_baseline.empty:
         return pd.DataFrame()
 
+    _recent_col, _recent_func = ("invoice_no", "nunique") if "invoice_no" in recent.columns else ("date", "count")
     recent_counts = (
         recent.groupby("customer_name", as_index=False)
-        .agg(recent_orders=("invoice_no", "nunique"))
+        .agg(recent_orders=(_recent_col, _recent_func))
     )
 
     merged = active_baseline.merge(recent_counts, on="customer_name", how="left")

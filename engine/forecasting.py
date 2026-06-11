@@ -4,7 +4,7 @@ engine/forecasting.py
 Facebook Prophet demand forecasting for the Wholesale BI System.
 
 Features:
-- Real Indian festival holidays (2023–2024) as Prophet custom regressors.
+- Real Indian festival holidays (2023–2027) as Prophet custom regressors.
 - Per-category demand forecasting with MLflow experiment tracking.
 - 30-day holdout validation with MAE and RMSE metrics.
 - Demand spike detection against current inventory.
@@ -39,34 +39,64 @@ logger = logging.getLogger(__name__)
 MLFLOW_EXPERIMENT = "wholesale_forecasting"
 
 # ---------------------------------------------------------------------------
-# Indian Festival Holidays 2023–2024
+# Indian Festival Holidays 2023–2027
 # ---------------------------------------------------------------------------
 
 INDIAN_FESTIVALS: pd.DataFrame = pd.DataFrame(
     {
         "holiday": [
-            "Diwali",    "Diwali",
-            "Holi",      "Holi",
-            "Navratri",  "Navratri",
-            "Dussehra",  "Dussehra",
-            "Eid",       "Eid",
+            # Diwali (2023-2027)
+            "Diwali", "Diwali", "Diwali", "Diwali", "Diwali",
+            # Holi (2023-2027)
+            "Holi", "Holi", "Holi", "Holi", "Holi",
+            # Navratri (2023-2027)
+            "Navratri", "Navratri", "Navratri", "Navratri", "Navratri",
+            # Dussehra (2023-2027)
+            "Dussehra", "Dussehra", "Dussehra", "Dussehra", "Dussehra",
+            # Eid-ul-Fitr (2023-2027)
+            "Eid_ul_Fitr", "Eid_ul_Fitr", "Eid_ul_Fitr", "Eid_ul_Fitr", "Eid_ul_Fitr",
+            # Eid-ul-Adha (2025-2027)
+            "Eid_ul_Adha", "Eid_ul_Adha", "Eid_ul_Adha",
+            # Ganesh Chaturthi (2025-2027)
+            "Ganesh_Chaturthi", "Ganesh_Chaturthi", "Ganesh_Chaturthi",
+            # Makar Sankranti (2025-2027)
+            "Makar_Sankranti", "Makar_Sankranti", "Makar_Sankranti",
+            # Raksha Bandhan (2025-2027)
+            "Raksha_Bandhan", "Raksha_Bandhan", "Raksha_Bandhan",
+            # Janmashtami (2025-2027)
+            "Janmashtami", "Janmashtami", "Janmashtami",
+            # Pongal (2025-2027)
+            "Pongal", "Pongal", "Pongal",
+            # Fixed holidays (2023-2027)
             "Republic_Day", "Republic_Day",
             "Independence_Day", "Independence_Day",
             "Gandhi_Jayanti", "Gandhi_Jayanti",
             "Christmas", "Christmas",
-            "New_Year",  "New_Year",
+            "New_Year", "New_Year",
         ],
         "ds": [
             # Diwali
-            "2023-11-12", "2024-11-01",
+            "2023-11-12", "2024-11-01", "2025-10-20", "2026-11-08", "2027-10-29",
             # Holi
-            "2023-03-08", "2024-03-25",
+            "2023-03-08", "2024-03-25", "2025-03-14", "2026-03-03", "2027-03-22",
             # Navratri (start)
-            "2023-10-15", "2024-10-03",
+            "2023-10-15", "2024-10-03", "2025-10-02", "2026-10-21", "2027-10-11",
             # Dussehra
-            "2023-10-24", "2024-10-12",
-            # Eid al-Fitr
-            "2023-03-30", "2024-04-10",
+            "2023-10-24", "2024-10-12", "2025-10-02", "2026-10-20", "2027-10-09",
+            # Eid-ul-Fitr
+            "2023-03-30", "2024-04-10", "2025-03-31", "2026-03-21", "2027-03-10",
+            # Eid-ul-Adha
+            "2025-06-07", "2026-05-27", "2027-05-17",
+            # Ganesh Chaturthi
+            "2025-08-27", "2026-09-15", "2027-09-04",
+            # Makar Sankranti
+            "2025-01-14", "2026-01-14", "2027-01-14",
+            # Raksha Bandhan
+            "2025-08-09", "2026-08-28", "2027-08-18",
+            # Janmashtami
+            "2025-08-16", "2026-09-04", "2027-08-25",
+            # Pongal
+            "2025-01-14", "2026-01-14", "2027-01-14",
             # Republic Day
             "2023-01-26", "2024-01-26",
             # Independence Day
@@ -79,11 +109,29 @@ INDIAN_FESTIVALS: pd.DataFrame = pd.DataFrame(
             "2023-01-01", "2024-01-01",
         ],
         "lower_window": [
-            -2, -2,
-            -1, -1,
-            -1, -1,
-            -1, -1,
-            -1, -1,
+            # Diwali
+            -2, -2, -2, -2, -2,
+            # Holi
+            -1, -1, -1, -1, -1,
+            # Navratri
+            -1, -1, -1, -1, -1,
+            # Dussehra
+            -1, -1, -1, -1, -1,
+            # Eid-ul-Fitr
+            -1, -1, -1, -1, -1,
+            # Eid-ul-Adha
+            -1, -1, -1,
+            # Ganesh Chaturthi
+            -1, -1, -1,
+            # Makar Sankranti
+            0, 0, 0,
+            # Raksha Bandhan
+            -1, -1, -1,
+            # Janmashtami
+            -1, -1, -1,
+            # Pongal
+            0, 0, 0,
+            # Fixed holidays
             0, 0,
             0, 0,
             0, 0,
@@ -91,11 +139,29 @@ INDIAN_FESTIVALS: pd.DataFrame = pd.DataFrame(
             -1, -1,
         ],
         "upper_window": [
-            3, 3,
-            1, 1,
-            9, 9,   # Navratri lasts 9 days
-            1, 1,
-            1, 1,
+            # Diwali
+            3, 3, 3, 3, 3,
+            # Holi
+            1, 1, 1, 1, 1,
+            # Navratri (lasts 9 days)
+            9, 9, 9, 9, 9,
+            # Dussehra
+            1, 1, 1, 1, 1,
+            # Eid-ul-Fitr
+            1, 1, 1, 1, 1,
+            # Eid-ul-Adha
+            1, 1, 1,
+            # Ganesh Chaturthi
+            1, 1, 1,
+            # Makar Sankranti
+            0, 0, 0,
+            # Raksha Bandhan
+            1, 1, 1,
+            # Janmashtami
+            1, 1, 1,
+            # Pongal
+            1, 1, 1,
+            # Fixed holidays
             0, 0,
             0, 0,
             0, 0,
@@ -200,70 +266,71 @@ def forecast_demand(
 
     product_label = product_name or category
 
-    mlflow.set_experiment(MLFLOW_EXPERIMENT)
-    with mlflow.start_run(run_name=f"forecast_{product_label}"):
-        mlflow.log_param("category", category)
-        mlflow.log_param("product_name", product_name or "all")
-        mlflow.log_param("changepoint_prior_scale", changepoint_prior_scale)
-        mlflow.log_param("seasonality_mode", seasonality_mode)
-        mlflow.log_param("forecast_periods", periods)
-        mlflow.log_param("training_rows", len(train))
-        mlflow.log_param("holdout_rows", holdout_days)
+    # Build and fit model
+    model = Prophet(
+        holidays=INDIAN_FESTIVALS,
+        changepoint_prior_scale=changepoint_prior_scale,
+        seasonality_mode=seasonality_mode,
+        weekly_seasonality=True,
+        yearly_seasonality=True if len(train) >= 365 else False,
+        daily_seasonality=False,
+        interval_width=0.80,
+    )
+    model.add_seasonality(name="monthly", period=30.5, fourier_order=5)
 
-        # Build and fit model
-        model = Prophet(
-            holidays=INDIAN_FESTIVALS,
-            changepoint_prior_scale=changepoint_prior_scale,
-            seasonality_mode=seasonality_mode,
-            weekly_seasonality=True,
-            yearly_seasonality=True if len(train) >= 365 else False,
-            daily_seasonality=False,
-            interval_width=0.80,
-        )
-        model.add_seasonality(name="monthly", period=30.5, fourier_order=5)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        model.fit(train)
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            model.fit(train)
+    # Holdout evaluation
+    holdout_future = model.make_future_dataframe(
+        periods=holdout_days, freq="D"
+    )
+    holdout_forecast = model.predict(holdout_future)
+    holdout_pred = holdout_forecast.tail(holdout_days)["yhat"].clip(lower=0).values
+    holdout_actual = test["y"].values
 
-        # Holdout evaluation
-        holdout_future = model.make_future_dataframe(
-            periods=holdout_days, freq="D"
-        )
-        holdout_forecast = model.predict(holdout_future)
-        holdout_pred = holdout_forecast.tail(holdout_days)["yhat"].clip(lower=0).values
-        holdout_actual = test["y"].values
+    mae = float(mean_absolute_error(holdout_actual, holdout_pred))
+    rmse = float(np.sqrt(mean_squared_error(holdout_actual, holdout_pred)))
 
-        mae = float(mean_absolute_error(holdout_actual, holdout_pred))
-        rmse = float(np.sqrt(mean_squared_error(holdout_actual, holdout_pred)))
+    logger.info(
+        "forecast_demand [%s]: MAE=%.2f, RMSE=%.2f, holdout=%d days",
+        product_label, mae, rmse, holdout_days,
+    )
 
-        mlflow.log_metric("mae", round(mae, 4))
-        mlflow.log_metric("rmse", round(rmse, 4))
+    # Full forecast (train + future)
+    future = model.make_future_dataframe(periods=periods, freq="D")
+    forecast = model.predict(future)
+    forecast["yhat"] = forecast["yhat"].clip(lower=0)
+    forecast["yhat_lower"] = forecast["yhat_lower"].clip(lower=0)
+    forecast["yhat_upper"] = forecast["yhat_upper"].clip(lower=0)
 
-        logger.info(
-            "forecast_demand [%s]: MAE=%.2f, RMSE=%.2f, holdout=%d days",
-            product_label, mae, rmse, holdout_days,
-        )
+    # Return only future rows
+    last_training_date = train["ds"].max()
+    result = forecast[forecast["ds"] > last_training_date].copy()
+    result = result[["ds", "yhat", "yhat_lower", "yhat_upper"]].reset_index(drop=True)
+    result["category"] = category
+    result["product_filter"] = product_name or "all"
 
-        # Full forecast (train + future)
-        future = model.make_future_dataframe(periods=periods, freq="D")
-        forecast = model.predict(future)
-        forecast["yhat"] = forecast["yhat"].clip(lower=0)
-        forecast["yhat_lower"] = forecast["yhat_lower"].clip(lower=0)
-        forecast["yhat_upper"] = forecast["yhat_upper"].clip(lower=0)
-
-        # Save model artifact
-        try:
-            mlflow.prophet.log_model(model, artifact_path="prophet_model")
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("forecast_demand: could not log Prophet model: %s", exc)
-
-        # Return only future rows
-        last_training_date = train["ds"].max()
-        result = forecast[forecast["ds"] > last_training_date].copy()
-        result = result[["ds", "yhat", "yhat_lower", "yhat_upper"]].reset_index(drop=True)
-        result["category"] = category
-        result["product_filter"] = product_name or "all"
+    # MLflow logging (non-fatal)
+    try:
+        mlflow.set_experiment(MLFLOW_EXPERIMENT)
+        with mlflow.start_run(run_name=f"forecast_{product_label}"):
+            mlflow.log_param("category", category)
+            mlflow.log_param("product_name", product_name or "all")
+            mlflow.log_param("changepoint_prior_scale", changepoint_prior_scale)
+            mlflow.log_param("seasonality_mode", seasonality_mode)
+            mlflow.log_param("forecast_periods", periods)
+            mlflow.log_param("training_rows", len(train))
+            mlflow.log_param("holdout_rows", holdout_days)
+            mlflow.log_metric("mae", round(mae, 4))
+            mlflow.log_metric("rmse", round(rmse, 4))
+            try:
+                mlflow.prophet.log_model(model, artifact_path="prophet_model")
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("forecast_demand: could not log Prophet model: %s", exc)
+    except Exception as exc:
+        logger.warning("MLflow logging failed (non-fatal): %s", exc)
 
     return result
 

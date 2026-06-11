@@ -134,23 +134,25 @@ def detect_anomalies(
     n_anomalies = int(df["is_anomaly"].sum())
     anomaly_rate = n_anomalies / len(df)
 
-    # MLflow logging
-    mlflow.set_experiment(MLFLOW_EXPERIMENT)
-    with mlflow.start_run(run_name="isolation_forest_anomaly"):
-        mlflow.log_param("contamination", contamination)
-        mlflow.log_param("n_estimators", n_estimators)
-        mlflow.log_param("random_state", random_state)
-        mlflow.log_param("n_rows", len(df))
-        mlflow.log_param("features_used", str(["discount_pct", "quantity",
-                                                "sale_price", "purchase_price",
-                                                "margin_ratio"]))
-        mlflow.log_metric("n_anomalies", n_anomalies)
-        mlflow.log_metric("anomaly_rate", round(anomaly_rate, 4))
-
-        try:
-            mlflow.sklearn.log_model(model, artifact_path="isolation_forest_model")
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("detect_anomalies: could not log model: %s", exc)
+    # MLflow logging (non-fatal)
+    try:
+        mlflow.set_experiment(MLFLOW_EXPERIMENT)
+        with mlflow.start_run(run_name="isolation_forest_anomaly"):
+            mlflow.log_param("contamination", contamination)
+            mlflow.log_param("n_estimators", n_estimators)
+            mlflow.log_param("random_state", random_state)
+            mlflow.log_param("n_rows", len(df))
+            mlflow.log_param("features_used", str(["discount_pct", "quantity",
+                                                    "sale_price", "purchase_price",
+                                                    "margin_ratio"]))
+            mlflow.log_metric("n_anomalies", n_anomalies)
+            mlflow.log_metric("anomaly_rate", round(anomaly_rate, 4))
+            try:
+                mlflow.sklearn.log_model(model, artifact_path="isolation_forest_model")
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("detect_anomalies: could not log model: %s", exc)
+    except Exception as exc:
+        logger.warning("MLflow logging failed (non-fatal): %s", exc)
 
     logger.info(
         "detect_anomalies: %d anomalies detected (%.1f%% of %d transactions).",

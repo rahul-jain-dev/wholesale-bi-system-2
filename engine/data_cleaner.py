@@ -320,7 +320,7 @@ PURCHASE_COLUMNS: list[str] = [
     "quantity", "landing_cost", "invoice_value",
 ]
 
-VALID_PAYMENT_STATUSES: set[str] = {"PAID", "UNPAID", "PARTIAL", "OVERDUE"}
+VALID_PAYMENT_STATUSES: set[str] = {"PAID", "UNPAID", "PENDING", "PARTIAL", "OVERDUE"}
 VALID_CATEGORIES: set[str] = {
     "FMCG", "Personal Care", "Beverages", "Snacks",
     "Household", "Dairy", "Stationery", "Electronics Accessories",

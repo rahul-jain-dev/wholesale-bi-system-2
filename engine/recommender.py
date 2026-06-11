@@ -407,7 +407,7 @@ def _build_dead_stock_recommendations(
                 f"Suggested discount: {discount_suggested}%. "
                 f"Category: {category_name}."
             )
-        elif (DS_MEDIUM_DAYS_LOW <= days <= DS_MEDIUM_DAYS_HIGH) or (
+        elif (days > DS_HIGH_DAYS) or (DS_MEDIUM_DAYS_LOW <= days <= DS_MEDIUM_DAYS_HIGH) or (
             DS_MEDIUM_CAPITAL_LOW <= capital <= DS_MEDIUM_CAPITAL_HIGH
         ):
             priority = "MEDIUM"
@@ -741,7 +741,7 @@ def _build_anomaly_recommendations(
             urgency = round(
                 min(discount / 50, 1.0) * 0.4
                 + min(value / 50_000, 1.0) * 0.4
-                + abs(min(anomaly_score / -0.5, 1.0)) * 0.2,
+                + min(abs(anomaly_score) / 0.5, 1.0) * 0.2,
                 4,
             )
             title = (
@@ -760,7 +760,7 @@ def _build_anomaly_recommendations(
             urgency = round(
                 min(discount / 50, 1.0) * 0.4
                 + min(value / 50_000, 1.0) * 0.4
-                + abs(min(anomaly_score / -0.5, 1.0)) * 0.2 * 0.5,
+                + min(abs(anomaly_score) / 0.5, 1.0) * 0.2 * 0.5,
                 4,
             )
             title = f"ANOMALY: Unusual transaction on Invoice #{invoice}"
