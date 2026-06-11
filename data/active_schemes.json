@@ -1,0 +1,26 @@
+[
+  {
+    "scheme_name": "Ghari Buy 5 Get 1",
+    "company": "RSPL",
+    "buy_product": "Ghari Detergent",
+    "min_qty": 5,
+    "free_product": "Ghari Detergent",
+    "free_qty": 1,
+    "start_date": "2024-01-01",
+    "end_date": "2024-12-31",
+    "town_filter": "",
+    "is_active": true
+  },
+  {
+    "scheme_name": "Parle-G Buy 100 Get 10",
+    "company": "Parle",
+    "buy_product": "Parle-G",
+    "min_qty": 100,
+    "free_product": "Parle-G",
+    "free_qty": 10,
+    "start_date": "2024-01-01",
+    "end_date": "2024-12-31",
+    "town_filter": "",
+    "is_active": true
+  }
+]

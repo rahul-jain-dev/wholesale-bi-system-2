@@ -20,6 +20,7 @@ Author: Rahul Jain | JECRC Foundation, Jaipur
 from __future__ import annotations
 
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -47,6 +48,7 @@ from engine.forecasting import (
     forecast_demand,
 )
 from engine.recommender import ceo_morning_briefing, filter_by_category, generate_recommendations
+from engine.qps_engine import load_schemes, save_schemes, calculate_claims, empty_scheme_df, default_scheme_row, SCHEME_COLUMNS
 from engine.segmentation import compute_rfm, get_segment_recommendations, segment_customers
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -375,6 +377,7 @@ with st.sidebar:
             "💰 Payment Collection",
             "👤 Customer Intelligence",
             "📈 Sales & Profitability",
+            "🎁 Schemes & Claims",
             "🎯 Recommendations",
         ],
         label_visibility="collapsed",
@@ -979,7 +982,190 @@ elif page == "📈 Sales & Profitability":
 
 
 # ═════════════════════════════════════════════════════════════════════════════
-# PAGE 5 — RECOMMENDATIONS (SHOWPIECE)
+# PAGE 6 — QPS SCHEMES & CLAIMS
+# ═════════════════════════════════════════════════════════════════════════════
+elif page == "🎁 Schemes & Claims":
+    st.markdown("""
+    <div class="page-header">
+        <h1>🎁 QPS Scheme Tracker</h1>
+        <p>Register company schemes · Auto-calculate claims · Track pending reimbursements</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Section 1: Scheme Registry ────────────────────────────────────────
+    st.markdown("### 📋 Scheme Registry")
+    st.caption("Register active company schemes below. Changes are auto-saved.")
+
+    # Load existing schemes
+    if "qps_schemes" not in st.session_state:
+        st.session_state["qps_schemes"] = load_schemes()
+
+    schemes = st.session_state["qps_schemes"]
+
+    # Add scheme button
+    col_add, col_clear = st.columns([1, 1])
+    with col_add:
+        if st.button("➕ Add New Scheme", use_container_width=True):
+            new_row = default_scheme_row()
+            new_df = pd.DataFrame([new_row])
+            st.session_state["qps_schemes"] = pd.concat(
+                [st.session_state["qps_schemes"], new_df], ignore_index=True
+            )
+            st.rerun()
+    with col_clear:
+        if st.button("🗑️ Clear All Schemes", use_container_width=True):
+            st.session_state["qps_schemes"] = empty_scheme_df()
+            save_schemes(empty_scheme_df())
+            st.rerun()
+
+    # Editable table
+    if not schemes.empty:
+        edited = st.data_editor(
+            schemes,
+            num_rows="dynamic",
+            use_container_width=True,
+            column_config={
+                "scheme_name": st.column_config.TextColumn("Scheme Name", width="medium"),
+                "company": st.column_config.TextColumn("Company", width="medium"),
+                "buy_product": st.column_config.TextColumn("Buy Product", width="large"),
+                "min_qty": st.column_config.NumberColumn("Min Qty", min_value=1, step=1, width="small"),
+                "free_product": st.column_config.TextColumn("Free Product", width="large",
+                    help="Leave blank if same as Buy Product"),
+                "free_qty": st.column_config.NumberColumn("Free Qty", min_value=1, step=1, width="small"),
+                "start_date": st.column_config.TextColumn("Start Date", width="medium",
+                    help="YYYY-MM-DD format"),
+                "end_date": st.column_config.TextColumn("End Date", width="medium",
+                    help="YYYY-MM-DD format"),
+                "town_filter": st.column_config.TextColumn("Town Filter", width="medium",
+                    help="Leave blank for all towns"),
+                "is_active": st.column_config.CheckboxColumn("Active", width="small", default=True),
+            },
+            key="scheme_editor",
+        )
+
+        # Auto-save on any change
+        if not edited.equals(schemes):
+            st.session_state["qps_schemes"] = edited
+            save_schemes(edited)
+            st.toast("✅ Schemes saved!", icon="💾")
+    else:
+        st.info("No schemes registered yet. Click **➕ Add New Scheme** to get started.")
+
+    st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
+
+    # ── Section 2: Claims Dashboard ───────────────────────────────────────
+    st.markdown("### 💰 Pending Company Claims")
+
+    if "sales_df" not in st.session_state:
+        st.warning("⚠️ Upload sales data first to calculate claims.")
+    elif st.session_state["qps_schemes"].empty:
+        st.info("Register at least one scheme above to see claims.")
+    else:
+        sales_df = st.session_state["sales_df"]
+        inv_df = st.session_state.get("inv_df", pd.DataFrame())
+        current_schemes = st.session_state["qps_schemes"]
+
+        claims = calculate_claims(sales_df, inv_df, current_schemes)
+
+        # KPI Cards
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("💰 Total Claim Amount", fmt_inr(claims["total_claim"]))
+        with col2:
+            st.metric("📄 Qualifying Invoices", f"{claims['n_invoices']}")
+        with col3:
+            st.metric("📦 Active Schemes", f"{claims['n_schemes']}")
+
+        if claims["total_claim"] > 0:
+            st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
+
+            # Company-wise breakdown
+            col_chart, col_table = st.columns([1, 1])
+
+            with col_chart:
+                st.markdown("#### 🏢 Claims by Company")
+                by_company = claims["by_company"]
+                if not by_company.empty:
+                    fig = px.bar(
+                        by_company,
+                        x="company",
+                        y="claim_amount",
+                        color="claim_amount",
+                        color_continuous_scale="Teal",
+                        template=PLOTLY_TEMPLATE,
+                        labels={"claim_amount": "Claim (₹)", "company": "Company"},
+                    )
+                    fig.update_layout(
+                        height=350,
+                        margin=dict(l=0, r=0, t=30, b=0),
+                        coloraxis_showscale=False,
+                        xaxis_tickangle=-45,
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+
+            with col_table:
+                st.markdown("#### 📊 Scheme-wise Summary")
+                by_scheme = claims["by_scheme"].copy()
+                if not by_scheme.empty:
+                    by_scheme["claim_amount"] = by_scheme["claim_amount"].apply(fmt_inr)
+                    st.dataframe(
+                        by_scheme[["scheme_name", "company", "claim_amount", "n_invoices", "free_units"]],
+                        use_container_width=True,
+                        hide_index=True,
+                        column_config={
+                            "scheme_name": "Scheme",
+                            "company": "Company",
+                            "claim_amount": "Claim Amount",
+                            "n_invoices": "Invoices",
+                            "free_units": "Free Units Given",
+                        },
+                    )
+
+            st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
+
+            # Detailed invoice table
+            st.markdown("#### 🔍 Detailed Claim — Invoice Level (Auditable)")
+            st.caption("Hand this table directly to the company sales officer for claim verification.")
+            details = claims["details"].copy()
+            if not details.empty:
+                details["claim_value"] = details["claim_value"].apply(fmt_inr)
+                details["unit_cost"] = details["unit_cost"].apply(fmt_inr)
+                st.dataframe(
+                    details,
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        "scheme_name": "Scheme",
+                        "company": "Company",
+                        "invoice_no": "Invoice #",
+                        "date": st.column_config.DateColumn("Date", format="DD-MM-YYYY"),
+                        "customer_name": "Customer",
+                        "buy_product": "Buy Product",
+                        "qty_sold": "Qty Sold",
+                        "scheme_cycles": "Cycles",
+                        "free_units": "Free Units",
+                        "free_product": "Free Product",
+                        "unit_cost": "Unit Cost",
+                        "claim_value": "Claim ₹",
+                    },
+                )
+
+                # Download button
+                csv_data = claims["details"].to_csv(index=False)
+                st.download_button(
+                    "📥 Download Claims Report (CSV)",
+                    data=csv_data,
+                    file_name=f"qps_claims_{datetime.now().strftime('%Y%m%d')}.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                )
+        else:
+            st.info("📭 No qualifying invoices found for the registered schemes. "
+                    "Check that product names in schemes exactly match the product names in your sales data.")
+
+
+# ═════════════════════════════════════════════════════════════════════════════
+# PAGE 7 — RECOMMENDATIONS (SHOWPIECE)
 # ═════════════════════════════════════════════════════════════════════════════
 elif page == "🎯 Recommendations":
     if "sales_df" not in st.session_state:
