@@ -249,7 +249,7 @@ PRIMARY_COLORS = px.colors.qualitative.Vivid
 DATA_DIR = Path(__file__).parent.parent / "data"
 
 def _default_data_exists() -> bool:
-    return (DATA_DIR / "sales_data.csv").exists()
+    return (DATA_DIR / "demo_sales.csv").exists()
 
 @st.cache_data(show_spinner="Loading and cleaning data...")
 def load_and_clean(
@@ -264,9 +264,9 @@ def load_and_clean(
 
 @st.cache_data(show_spinner="Loading default data...")
 def load_defaults() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    sales_df = standardize_sales(pd.read_csv(DATA_DIR / "sales_data.csv"))
-    inv_df   = standardize_inventory(pd.read_csv(DATA_DIR / "inventory_data.csv"))
-    cust_df  = standardize_customers(pd.read_csv(DATA_DIR / "customer_data.csv"))
+    sales_df = standardize_sales(pd.read_csv(DATA_DIR / "demo_sales.csv"))
+    inv_df   = standardize_inventory(pd.read_csv(DATA_DIR / "demo_inventory.csv"))
+    cust_df  = standardize_customers(pd.read_csv(DATA_DIR / "demo_customers.csv"))
     return sales_df, inv_df, cust_df
 
 # ── Analytics cache functions ─────────────────────────────────────────────────
@@ -553,18 +553,21 @@ if page == "🏠 Upload & Overview":
     # Load default data if not uploaded
     if "sales_df" not in st.session_state:
         if _default_data_exists():
-            with st.spinner("Loading synthetic demonstration data..."):
-                sales_df, inv_df, cust_df = load_defaults()
-                st.session_state["sales_df"]    = sales_df
-                st.session_state["inv_df"]      = inv_df
-                st.session_state["cust_df"]     = cust_df
-                st.session_state["data_source"] = "synthetic"
-                st.session_state["sales_hash"] = int(pd.util.hash_pandas_object(sales_df).sum())
-                st.session_state["inv_hash"] = int(pd.util.hash_pandas_object(inv_df).sum())
-                st.session_state["cust_hash"] = int(pd.util.hash_pandas_object(cust_df).sum())
-            st.info("📊 Showing synthetic demonstration data calibrated against real Indian WPI + festival calendars. Upload your ERP CSVs above to analyze real data.")
+            st.info("💡 **Interview / Demo Mode**: You can load pre-configured, interview-ready data instantly instead of uploading files manually.")
+            if st.button("🚀 Load Pre-configured Demo Data", use_container_width=True):
+                with st.spinner("Loading interview-ready demo data..."):
+                    sales_df, inv_df, cust_df = load_defaults()
+                    st.session_state["sales_df"]    = sales_df
+                    st.session_state["inv_df"]      = inv_df
+                    st.session_state["cust_df"]     = cust_df
+                    st.session_state["data_source"] = "synthetic"
+                    st.session_state["sales_hash"] = int(pd.util.hash_pandas_object(sales_df).sum())
+                    st.session_state["inv_hash"] = int(pd.util.hash_pandas_object(inv_df).sum())
+                    st.session_state["cust_hash"] = int(pd.util.hash_pandas_object(cust_df).sum())
+                st.rerun()
+            st.stop()
         else:
-            st.warning("⚠️ No data found. Run `python data/data_generator.py` to generate demo data, or upload your CSV files above.")
+            st.warning("⚠️ No data found. Run `python scripts/generate_demo_data.py` to generate demo data, or upload your CSV files above.")
             st.stop()
 
     sales_df = st.session_state["sales_df"]
