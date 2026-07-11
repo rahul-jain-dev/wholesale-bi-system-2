@@ -408,6 +408,90 @@ if page == "🏠 Upload & Overview":
     </div>
     """, unsafe_allow_html=True)
 
+    # ── Demo Data Download Section ────────────────────────────────────────────
+    demo_dir = Path(__file__).parent.parent / "data"
+    demo_sales_path     = demo_dir / "demo_sales.csv"
+    demo_inv_path       = demo_dir / "demo_inventory.csv"
+    demo_cust_path      = demo_dir / "demo_customers.csv"
+
+    if demo_sales_path.exists():
+        st.markdown("""
+        <div style="
+            background: linear-gradient(135deg, #1a2744 0%, #0f1f3d 100%);
+            border: 1px solid #6C63FF;
+            border-radius: 16px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+        ">
+            <h3 style="margin: 0 0 6px 0; color: #a78bfa;">🎯 Try the Dashboard — 3 Easy Steps</h3>
+            <p style="color: #94a3b8; margin: 0 0 20px 0; font-size: 14px;">
+                Download our pre-built sample dataset for <strong style="color:#e2e8f0;">Raj Distributors, Jaipur</strong> —
+                a fictional FMCG wholesale company — then upload the files to see AI insights in action.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        step1, step2, step3 = st.columns(3)
+
+        with step1:
+            st.markdown("""
+            <div style="text-align:center; padding: 8px 0 4px 0;">
+                <span style="font-size:32px;">⬇️</span><br>
+                <strong style="color:#a78bfa;">STEP 1</strong><br>
+                <span style="font-size:12px; color:#94a3b8;">Download the 3 sample files below</span>
+            </div>
+            """, unsafe_allow_html=True)
+            st.download_button(
+                "📊 Sales Data (CSV)",
+                data=open(demo_sales_path, "rb").read(),
+                file_name="demo_sales.csv",
+                mime="text/csv",
+                use_container_width=True,
+            )
+            st.download_button(
+                "📦 Inventory Data (CSV)",
+                data=open(demo_inv_path, "rb").read(),
+                file_name="demo_inventory.csv",
+                mime="text/csv",
+                use_container_width=True,
+            )
+            st.download_button(
+                "👥 Customer Data (CSV)",
+                data=open(demo_cust_path, "rb").read(),
+                file_name="demo_customers.csv",
+                mime="text/csv",
+                use_container_width=True,
+            )
+
+        with step2:
+            st.markdown("""
+            <div style="text-align:center; padding: 8px 0 4px 0;">
+                <span style="font-size:32px;">⬆️</span><br>
+                <strong style="color:#a78bfa;">STEP 2</strong><br>
+                <span style="font-size:12px; color:#94a3b8;">Upload them using the section below</span>
+            </div>
+            """, unsafe_allow_html=True)
+            st.info("Open **📁 Upload ERP Data** below and upload all 3 files you just downloaded.")
+
+        with step3:
+            st.markdown("""
+            <div style="text-align:center; padding: 8px 0 4px 0;">
+                <span style="font-size:32px;">📊</span><br>
+                <strong style="color:#a78bfa;">STEP 3</strong><br>
+                <span style="font-size:12px; color:#94a3b8;">Explore AI insights across all pages</span>
+            </div>
+            """, unsafe_allow_html=True)
+            st.markdown("""
+            **What you'll discover:**
+            - 📦 ₹1.1L of capital blocked in dead stock
+            - 💰 3 customers with unpaid dues
+            - 👤 Customer segments (Champions → Lost)
+            - 📈 Holi festival demand spike in sales
+            - 🔍 2 anomalous discount transactions
+            """)
+
+        st.markdown("---")
+
     # Upload section
     with st.expander("📁 Upload ERP Data (Kuber / Tally / Marg — CSV or Excel)", expanded=not _default_data_exists()):
         col1, col2, col3 = st.columns(3)
