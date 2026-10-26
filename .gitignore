@@ -52,5 +52,4 @@ logs/
 # Streamlit
 .streamlit/secrets.toml
 
-# Docker
-.dockerignore
+

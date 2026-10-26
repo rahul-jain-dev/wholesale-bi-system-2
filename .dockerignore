@@ -1,0 +1,54 @@
+# Version Control
+.git/
+.gitignore
+.gitattributes
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+
+# Build & Packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# MLflow Tracking & Model Artifacts
+mlruns/
+mlartifacts/
+*.mlmodel
+*.pkl
+*.joblib
+*.h5
+
+# Local Environment & Secrets
+.env
+.env.local
+*.env
+.streamlit/secrets.toml
+
+# Testing & Linting Caches
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+logs/
+streamlit_*.log
+
+# IDE & OS Specific
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
