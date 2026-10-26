@@ -395,7 +395,7 @@ st.markdown("""
 <div class="top-navbar">
     <div class="top-navbar-brand">📦 Wholesale BI System</div>
     <div class="top-navbar-meta">
-        <span><b>Business:</b> Uniara, Tonk, Rajasthan</span> &nbsp;|&nbsp; 
+        <span><b>Business:</b> Uniara, Tonk, Rajasthan</span> &nbsp;|&nbsp;
         <span><b>ERP:</b> Kuber / Tally / Marg</span>
     </div>
 </div>
@@ -647,7 +647,8 @@ if page == "🏠 Upload & Overview":
 # ═════════════════════════════════════════════════════════════════════════════
 elif page == "📦 Inventory Intelligence":
     if "sales_df" not in st.session_state:
-        st.warning("Please upload data or go to Upload & Overview page first."); st.stop()
+        st.warning("Please upload data or go to Upload & Overview page first.")
+        st.stop()
 
     st.markdown("""
     <div class="page-header">
@@ -667,10 +668,14 @@ elif page == "📦 Inventory Intelligence":
     dead_blocked  = dead_stock_df.loc[dead_stock_df["stock_status"] == "DEAD", "capital_blocked"].sum()
 
     col1, col2, col3, col4 = st.columns(4)
-    with col1: st.metric("✅ Active SKUs", active, delta="≤30 days unsold")
-    with col2: st.metric("🟡 Slow SKUs", slow, delta="31-60 days unsold", delta_color="off")
-    with col3: st.metric("🔴 Dead SKUs", dead, delta=">60 days unsold", delta_color="inverse")
-    with col4: st.metric("💀 Dead Capital", fmt_inr(dead_blocked), delta_color="inverse")
+    with col1:
+        st.metric("✅ Active SKUs", active, delta="≤30 days unsold")
+    with col2:
+        st.metric("🟡 Slow SKUs", slow, delta="31-60 days unsold", delta_color="off")
+    with col3:
+        st.metric("🔴 Dead SKUs", dead, delta=">60 days unsold", delta_color="inverse")
+    with col4:
+        st.metric("💀 Dead Capital", fmt_inr(dead_blocked), delta_color="inverse")
 
     st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
 
@@ -765,7 +770,8 @@ elif page == "📦 Inventory Intelligence":
 # ═════════════════════════════════════════════════════════════════════════════
 elif page == "💰 Payment Collection":
     if "sales_df" not in st.session_state:
-        st.warning("Please upload data or go to Upload & Overview page first."); st.stop()
+        st.warning("Please upload data or go to Upload & Overview page first.")
+        st.stop()
 
     st.markdown("""
     <div class="page-header">
@@ -793,9 +799,22 @@ elif page == "💰 Payment Collection":
     med_val     = medium_risk["outstanding_amount"].sum()
 
     col1, col2, col3, col4 = st.columns(4)
-    with col1: st.metric("💰 Total Outstanding", fmt_inr(total_out))
-    with col2: st.metric("🔴 HIGH Risk", f"{len(high_risk)} customers", delta=fmt_inr(high_val), delta_color="inverse")
-    with col3: st.metric("🟡 MEDIUM Risk", f"{len(medium_risk)} customers", delta=fmt_inr(med_val), delta_color="inverse")
+    with col1:
+        st.metric("💰 Total Outstanding", fmt_inr(total_out))
+    with col2:
+        st.metric(
+            "🔴 HIGH Risk",
+            f"{len(high_risk)} customers",
+            delta=fmt_inr(high_val),
+            delta_color="inverse",
+        )
+    with col3:
+        st.metric(
+            "🟡 MEDIUM Risk",
+            f"{len(medium_risk)} customers",
+            delta=fmt_inr(med_val),
+            delta_color="inverse",
+        )
     with col4:
         avg_overdue = outstanding_df["days_overdue"].mean()
         if outstanding_df.empty or pd.isna(avg_overdue):
@@ -894,7 +913,8 @@ elif page == "💰 Payment Collection":
 # ═════════════════════════════════════════════════════════════════════════════
 elif page == "👤 Customer Intelligence":
     if "sales_df" not in st.session_state:
-        st.warning("Please upload data or go to Upload & Overview page first."); st.stop()
+        st.warning("Please upload data or go to Upload & Overview page first.")
+        st.stop()
 
     st.markdown("""
     <div class="page-header">
@@ -955,7 +975,8 @@ elif page == "👤 Customer Intelligence":
 # ═════════════════════════════════════════════════════════════════════════════
 elif page == "📈 Sales & Profitability":
     if "sales_df" not in st.session_state:
-        st.warning("Please upload data or go to Upload & Overview page first."); st.stop()
+        st.warning("Please upload data or go to Upload & Overview page first.")
+        st.stop()
 
     st.markdown("""
     <div class="page-header">
@@ -1076,7 +1097,8 @@ elif page == "📈 Sales & Profitability":
 # ═════════════════════════════════════════════════════════════════════════════
 elif page == "🎯 Recommendations":
     if "sales_df" not in st.session_state:
-        st.warning("Please upload data or go to Upload & Overview page first."); st.stop()
+        st.warning("Please upload data or go to Upload & Overview page first.")
+        st.stop()
 
     st.markdown("""
     <div class="page-header">
@@ -1121,10 +1143,14 @@ elif page == "🎯 Recommendations":
     low_count    = sum(1 for r in all_recs if getattr(r, "priority", "") == "LOW")
 
     col1, col2, col3, col4 = st.columns(4)
-    with col1: st.metric("💰 Total Opportunity", fmt_inr(total_opportunity))
-    with col2: st.metric("🔴 HIGH Priority", high_count)
-    with col3: st.metric("🟡 MEDIUM Priority", medium_count)
-    with col4: st.metric("🟢 LOW Priority", low_count)
+    with col1:
+        st.metric("💰 Total Opportunity", fmt_inr(total_opportunity))
+    with col2:
+        st.metric("🔴 HIGH Priority", high_count)
+    with col3:
+        st.metric("🟡 MEDIUM Priority", medium_count)
+    with col4:
+        st.metric("🟢 LOW Priority", low_count)
 
     st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
 

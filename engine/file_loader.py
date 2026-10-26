@@ -260,7 +260,7 @@ def _read_excel(buf: io.BytesIO, sheet_name=None) -> pd.DataFrame:
     best_sheet, best_rows = sheets[0], 0
     for s in sheets:
         try:
-            tmp = pd.read_excel(xl, sheet_name=s, dtype=str, nrows=5)
+            pd.read_excel(xl, sheet_name=s, dtype=str, nrows=5)
             rows = len(pd.read_excel(xl, sheet_name=s, dtype=str))
             if rows > best_rows:
                 best_sheet, best_rows = s, rows
@@ -303,9 +303,6 @@ def _skip_junk_header_rows(df: pd.DataFrame) -> pd.DataFrame:
 
     # If first row has many nulls or looks like a company name row, re-read
     # by promoting the first non-null row to header.
-    first_row = df.iloc[0]
-    non_null_count = first_row.notna().sum()
-
     # Heuristic: real header rows have >= 3 non-null string values
     # AND at least one looks like a known column alias keyword
     HEADER_KEYWORDS = {

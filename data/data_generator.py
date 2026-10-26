@@ -343,7 +343,6 @@ PRODUCT_COMPANY_MAP: dict[str, str] = {
 def build_product_master() -> pd.DataFrame:
     """Creates a product master with 300 SKUs, base prices, and margin targets."""
     products = []
-    company_list = list(COMPANIES.keys())
 
     for category, templates in PRODUCT_TEMPLATES.items():
         for product_name, variants in templates:

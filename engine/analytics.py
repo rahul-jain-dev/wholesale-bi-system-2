@@ -241,7 +241,6 @@ def get_outstanding_payments(
 
     # Urgency score using the system formula
     max_amount = outstanding["invoice_amount"].max() or 1.0
-    max_days = outstanding["days_overdue"].clip(lower=0).max() or 1.0
 
     def _urgency(row: pd.Series) -> float:
         days_factor = min(row["days_overdue"] / 90.0, 1.0) if row["days_overdue"] > 0 else 0.0
