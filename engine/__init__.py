@@ -22,53 +22,14 @@ Python: 3.12
 """
 
 # Data cleaning & validation
-from engine.data_cleaner import (
-    standardize_sales,
-    standardize_inventory,
-    standardize_customers,
-    standardize_purchases,
-    clean_dataframe,
-    validate_csv_upload,
-    load_and_standardize,
-)
-
 # Business analytics
 from engine.analytics import (
+    area_sales_ranking,
+    calculate_margins,
+    category_month_heatmap,
     detect_dead_stock,
     get_outstanding_payments,
-    calculate_margins,
-    area_sales_ranking,
     monthly_revenue_trend,
-    category_month_heatmap,
-)
-
-# Scoring formulas
-from engine.scoring import (
-    urgency_score,
-    normalize_factor,
-    risk_score_payment,
-    dead_stock_score,
-    compute_days_factor,
-    compute_amount_factor,
-    compute_trend_factor,
-    score_payment_dataframe,
-)
-
-# Demand forecasting
-from engine.forecasting import (
-    forecast_demand,
-    detect_demand_spikes,
-    detect_declining_products,
-    get_days_coverage,
-    INDIAN_FESTIVALS,
-)
-
-# Customer segmentation
-from engine.segmentation import (
-    compute_rfm,
-    segment_customers,
-    get_segment_recommendations,
-    cohort_retention,
 )
 
 # Anomaly detection
@@ -78,14 +39,52 @@ from engine.anomaly_detector import (
     flag_salesperson_anomalies,
     get_anomaly_summary,
 )
+from engine.data_cleaner import (
+    clean_dataframe,
+    load_and_standardize,
+    standardize_customers,
+    standardize_inventory,
+    standardize_purchases,
+    standardize_sales,
+    validate_csv_upload,
+)
+
+# Demand forecasting
+from engine.forecasting import (
+    INDIAN_FESTIVALS,
+    detect_declining_products,
+    detect_demand_spikes,
+    forecast_demand,
+    get_days_coverage,
+)
 
 # Recommendation engine
 from engine.recommender import (
     Recommendation,
-    generate_recommendations,
     ceo_morning_briefing,
     filter_by_category,
+    generate_recommendations,
     recommendations_to_dataframe,
+)
+
+# Scoring formulas
+from engine.scoring import (
+    compute_amount_factor,
+    compute_days_factor,
+    compute_trend_factor,
+    dead_stock_score,
+    normalize_factor,
+    risk_score_payment,
+    score_payment_dataframe,
+    urgency_score,
+)
+
+# Customer segmentation
+from engine.segmentation import (
+    cohort_retention,
+    compute_rfm,
+    get_segment_recommendations,
+    segment_customers,
 )
 
 __all__ = [

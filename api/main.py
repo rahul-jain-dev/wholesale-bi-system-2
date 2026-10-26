@@ -14,7 +14,6 @@ Author: Rahul Jain | JECRC Foundation, Jaipur
 from __future__ import annotations
 
 import io
-import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -22,7 +21,6 @@ from typing import Any
 import pandas as pd
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 # Add project root to path so engine imports work
@@ -31,12 +29,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from engine.analytics import (
     area_sales_ranking,
     calculate_margins,
-    category_month_heatmap,
     detect_dead_stock,
     get_outstanding_payments,
     monthly_revenue_trend,
 )
-from engine.anomaly_detector import detect_anomalies, get_anomaly_summary
+from engine.anomaly_detector import detect_anomalies
 from engine.data_cleaner import (
     standardize_customers,
     standardize_inventory,

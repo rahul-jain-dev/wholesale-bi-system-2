@@ -5,11 +5,13 @@ Unit tests for data cleaning and schema standardizer (engine/data_cleaner.py).
 """
 
 import unittest
+
 import pandas as pd
+
 from engine.data_cleaner import (
+    SALES_ALIASES,
     clean_dataframe,
     standardize_sales,
-    SALES_ALIASES,
 )
 
 

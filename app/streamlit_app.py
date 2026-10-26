@@ -20,7 +20,6 @@ Author: Rahul Jain | JECRC Foundation, Jaipur
 from __future__ import annotations
 
 import sys
-from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -34,22 +33,27 @@ from engine.analytics import (
     area_sales_ranking,
     calculate_margins,
     category_month_heatmap,
+    detect_churned_retailers,
     detect_dead_stock,
     get_outstanding_payments,
     monthly_revenue_trend,
-    detect_churned_retailers,
 )
 from engine.anomaly_detector import detect_anomalies
-from engine.data_cleaner import standardize_customers, standardize_inventory, standardize_sales, SALES_ALIASES, INVENTORY_ALIASES, CUSTOMER_ALIASES
-from engine.file_loader import preprocess_erp_dataframe, read_file, get_unmapped_columns
+from engine.data_cleaner import (
+    CUSTOMER_ALIASES,
+    INVENTORY_ALIASES,
+    SALES_ALIASES,
+    standardize_customers,
+    standardize_inventory,
+    standardize_sales,
+)
+from engine.file_loader import get_unmapped_columns, preprocess_erp_dataframe, read_file
 from engine.forecasting import (
-    detect_declining_products,
     detect_demand_spikes,
     forecast_demand,
 )
 from engine.recommender import ceo_morning_briefing, filter_by_category, generate_recommendations
-
-from engine.segmentation import compute_rfm, get_segment_recommendations, segment_customers
+from engine.segmentation import compute_rfm, segment_customers
 
 # ═════════════════════════════════════════════════════════════════════════════
 # PAGE CONFIG & THEME
@@ -609,7 +613,7 @@ if page == "🏠 Upload & Overview":
         st.caption(f"{days} days of transaction history")
 
         total_rev = (sales_df["sale_price"] * sales_df["quantity"]).sum()
-        st.markdown(f"#### 💹 Total Revenue")
+        st.markdown("#### 💹 Total Revenue")
         st.markdown(f"## {fmt_inr(total_rev)}")
 
     with col2:
@@ -939,7 +943,7 @@ elif page == "👤 Customer Intelligence":
         st.markdown("#### 📋 Data View")
         display_churn = churn_df.copy()
         display_churn["avg_monthly_revenue_before"] = display_churn["avg_monthly_revenue_before"].apply(fmt_inr)
-        
+
         st.dataframe(
             display_churn,
             use_container_width=True,

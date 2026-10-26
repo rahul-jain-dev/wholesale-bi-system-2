@@ -6,6 +6,7 @@ Tests core urgency formulas, boundary handling, and normalization logic.
 """
 
 import unittest
+
 from engine.scoring import (
     URGENCY_WEIGHTS,
     compute_amount_factor,

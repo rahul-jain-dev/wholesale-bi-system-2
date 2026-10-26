@@ -20,7 +20,7 @@ Python: 3.12
 from __future__ import annotations
 
 import logging
-from datetime import datetime, date
+from datetime import date, datetime
 from typing import Optional
 
 import numpy as np

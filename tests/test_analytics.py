@@ -5,6 +5,7 @@ Unit tests for business analytics (engine/analytics.py).
 """
 
 import unittest
+
 from engine.analytics import (
     area_sales_ranking,
     calculate_margins,

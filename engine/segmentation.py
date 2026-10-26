@@ -24,11 +24,11 @@ from datetime import datetime
 from typing import Optional
 
 import matplotlib
+
 matplotlib.use("Agg")  # Non-interactive backend — must be set before pyplot import
 import matplotlib.pyplot as plt
 import mlflow
 import mlflow.sklearn
-import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
